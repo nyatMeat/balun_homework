@@ -9,7 +9,7 @@ import (
 func TestSetGetEngine(t *testing.T) {
 	t.Parallel()
 
-	e := NewMapEngine()
+	e := NewInMemoryEngine()
 
 	tests := map[string]struct {
 		key             string
@@ -47,7 +47,7 @@ func TestSetGetEngine(t *testing.T) {
 func TestDeleteEngine(t *testing.T) {
 	t.Parallel()
 
-	e := NewMapEngine()
+	e := NewInMemoryEngine()
 	e.data["key"] = "value"
 
 	tests := map[string]struct {

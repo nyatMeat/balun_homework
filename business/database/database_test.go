@@ -21,9 +21,9 @@ func TestExecute(t *testing.T) {
 
 	ctx := context.Background()
 
-	e := storage.NewMapEngine()
+	e := storage.NewInMemoryEngine()
 
-	st := storage.NewMapStorage(e, log)
+	st := storage.NewInMemoryStorage(e, log)
 
 	p := compute.NewStdParser()
 

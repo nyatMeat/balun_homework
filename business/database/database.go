@@ -36,7 +36,6 @@ func NewDatabase(ctx context.Context, st Storage, cp compute.Compute, log *logge
 }
 
 func (d *Database) Execute(query string) (string, error) {
-
 	q, err := d.cp.Handle(d.ctx, query)
 
 	d.log.Debug(d.ctx, "[Database::Execute] Try to handle query", query)
