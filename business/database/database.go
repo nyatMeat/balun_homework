@@ -83,3 +83,7 @@ func (d *Database) Execute(query string) (string, error) {
 
 	return "", DBQueryOperationNotSupported
 }
+
+func (d *Database) Serve(request string) (string, error) {
+	return d.Execute(request)
+}

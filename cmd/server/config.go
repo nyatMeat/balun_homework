@@ -37,7 +37,7 @@ const (
 	defaultMaxMessageSize = "4KB"
 	defaultIdleTimeout    = "5m"
 
-	defaultLoggingLevel  = "default"
+	defaultLoggingLevel  = "debug"
 	defaultLoggingOutput = "log/output.log"
 )
 

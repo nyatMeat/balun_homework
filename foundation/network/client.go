@@ -7,12 +7,10 @@ import (
 
 const clientDefaultBufSize = 4096
 
-// TCPClient is a struct for TCP client
 type TCPClient struct {
 	conn net.Conn
 }
 
-// NewClient returns new TCP client
 func NewClient(serverAddress string) (*TCPClient, error) {
 	conn, err := net.Dial("tcp", serverAddress)
 
@@ -25,9 +23,8 @@ func NewClient(serverAddress string) (*TCPClient, error) {
 	}, nil
 }
 
-// Send sends request
 func (c *TCPClient) Send(request []byte) ([]byte, error) {
-	_, err := c.conn.Write([]byte(request))
+	_, err := c.conn.Write(request)
 
 	if err != nil {
 		return nil, fmt.Errorf("unable to send request: %w", err)

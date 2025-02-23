@@ -18,7 +18,7 @@ func NewInMemoryStorage(e *InMemoryEngine, log *logger.Logger) *InMemoryStorage 
 }
 
 func (ms *InMemoryStorage) Get(ctx context.Context, key string) (string, bool, error) {
-	ms.log.Debug(ctx, "[InMemoryStorage::Get] Try to get value", key)
+	ms.log.Debug(ctx, "[InMemoryStorage::Get] Try to get value")
 
 	v, ok := ms.e.Get(key)
 

@@ -4,11 +4,13 @@ import (
 	"balun_homework_1/business/database"
 	"balun_homework_1/foundation/compute"
 	"balun_homework_1/foundation/logger"
+	"balun_homework_1/foundation/network"
 	"balun_homework_1/foundation/storage"
-	"bufio"
+	"balun_homework_1/foundation/utils"
 	"context"
 	"fmt"
 	"os"
+	"time"
 )
 
 const configPath = "config.yaml"
@@ -44,7 +46,7 @@ func initLogger(cfg LoggingConfig) (*logger.Logger, error) {
 		return nil, fmt.Errorf("parse log level error: %w", err)
 	}
 
-	logOutput, err := os.Open(cfg.Output)
+	logOutput, err := os.OpenFile(cfg.Output, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 
 	if err != nil {
 		return nil, fmt.Errorf("file open error: %w", err)
@@ -62,28 +64,37 @@ func run(ctx context.Context, cfg ServerConfig, log *logger.Logger) error {
 		return fmt.Errorf("initiate db error: %w", err)
 	}
 
-	reader := bufio.NewReader(os.Stdin)
+	idleTimeout, err := time.ParseDuration(cfg.Network.IdleTimeout)
 
-	for {
-		query, err := reader.ReadString('\n')
-
-		if err != nil {
-			log.Error(ctx, "[Main::run] Cannot read line from input", err)
-
-			continue
-		}
-
-		res, err := db.Execute(query)
-
-		if err != nil {
-			log.Error(ctx, "[Main::run] Error occurred while executing query", query, err)
-
-			continue
-		}
-
-		fmt.Println(res)
+	if err != nil {
+		return fmt.Errorf("parse idle timeout error: %w", err)
 	}
 
+	maxMessageSize, err := utils.ParseHumanReadableSize(cfg.Network.MaxMessageSize)
+
+	if err != nil {
+		return fmt.Errorf("parse max message size error: %w", err)
+	}
+
+	server := network.NewTCPServer(
+		ctx,
+		db,
+		log,
+		cfg.Network.Address,
+		cfg.Network.MaxConnections,
+		idleTimeout,
+		maxMessageSize,
+	)
+
+	defer server.Stop()
+
+	err = server.Run()
+
+	if err != nil {
+		return fmt.Errorf("server sun error: %w", err)
+	}
+
+	return nil
 }
 
 func initiateDatabase(ctx context.Context, cfg EngineConfig, log *logger.Logger) (*database.Database, error) {

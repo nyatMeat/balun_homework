@@ -1,38 +1,27 @@
 package concurrency
 
-import "sync"
-
 type Semaphore struct {
-	count     int
-	max       int
-	condition *sync.Cond
+	semaphore chan struct{}
 }
 
-func NewSemaphore(limit int) *Semaphore {
-	mutex := &sync.Mutex{}
-
+func NewSemaphore(concurrency int) *Semaphore {
 	return &Semaphore{
-		max:       limit,
-		condition: sync.NewCond(mutex),
+		semaphore: make(chan struct{}, concurrency),
 	}
 }
 
 func (s *Semaphore) Acquire() {
-	s.condition.L.Lock()
-
-	defer s.condition.L.Unlock()
-
-	for s.count >= s.max {
-		s.condition.Wait()
+	if s == nil || s.semaphore == nil {
+		return
 	}
 
-	s.count++
+	s.semaphore <- struct{}{}
 }
 
 func (s *Semaphore) Release() {
-	s.condition.L.Lock()
-	defer s.condition.L.Unlock()
+	if s == nil || s.semaphore == nil {
+		return
+	}
 
-	s.count--
-	s.condition.Signal()
+	<-s.semaphore
 }
