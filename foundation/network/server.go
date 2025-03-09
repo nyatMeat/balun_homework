@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"time"
 )
@@ -90,42 +91,44 @@ func (ts *TCPServer) Run() error {
 }
 
 func (ts *TCPServer) processConnection(conn net.Conn) {
-	defer func() {
-		err := conn.Close()
-
-		if err != nil {
-			ts.logger.Error(ts.ctx, "[TCPServer::processConnection] Error connection closing", err)
-		}
-	}()
+	defer conn.Close()
 
 	buf := make([]byte, ts.maxMessageSize)
 
 	for {
-		requestLen, err := conn.Read(buf)
+		if err := conn.SetReadDeadline(time.Now().Add(ts.idleTimeout)); err != nil {
+			ts.logger.Error(ts.ctx, "[TCPServer::processConnection] SetReadDeadline error", err)
+			return
+		}
 
+		requestLen, err := conn.Read(buf)
 		if err != nil {
-			ts.logger.Error(ts.ctx, "[TCPServer::processConnection] Cannot read request", err)
-			break
+			if errors.Is(err, io.EOF) {
+				ts.logger.Info(ts.ctx, "[TCPServer::processConnection] Client closed connection")
+				return
+			}
+			if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
+				ts.logger.Info(ts.ctx, "[TCPServer::processConnection] Read timeout")
+				return
+			}
+			ts.logger.Error(ts.ctx, "[TCPServer::processConnection] Read error", err)
+			return
 		}
 
 		if requestLen > ts.maxMessageSize {
 			ts.logger.Error(ts.ctx, "[TCPServer::processConnection] Request exceeds max size")
-			break
+			return
 		}
 
 		request := string(buf[:requestLen])
 		response, err := ts.server.Serve(request)
-
 		if err != nil {
 			response = err.Error()
 		}
 
-		ts.logger.Info(ts.ctx, "[TCPServer::processConnection] Send response to client")
-
-		_, err = conn.Write([]byte(response))
-
-		if err != nil {
-			ts.logger.Error(ts.ctx, "[TCPServer::processConnection] Write response error", err)
+		if _, err := conn.Write([]byte(response)); err != nil {
+			ts.logger.Error(ts.ctx, "[TCPServer::processConnection] Write error", err)
+			return
 		}
 	}
 }
