@@ -11,9 +11,9 @@ import (
 func TestSetGetStorage(t *testing.T) {
 	t.Parallel()
 
-	e := NewMapEngine()
+	e := NewInMemoryEngine()
 	e.data["key"] = "value"
-	s := NewMapStorage(e, logger.CreateMock())
+	s := NewInMemoryStorage(e, logger.CreateMock())
 
 	ctx := context.Background()
 
@@ -57,9 +57,9 @@ func TestSetGetStorage(t *testing.T) {
 func TestDeleteStorage(t *testing.T) {
 	t.Parallel()
 
-	e := NewMapEngine()
+	e := NewInMemoryEngine()
 	e.data["key"] = "value"
-	s := NewMapStorage(e, logger.CreateMock())
+	s := NewInMemoryStorage(e, logger.CreateMock())
 
 	ctx := context.Background()
 
